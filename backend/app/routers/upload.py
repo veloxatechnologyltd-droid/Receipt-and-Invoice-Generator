@@ -3,8 +3,7 @@ File upload routes
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from fastapi.responses import JSONResponse
-import os
-import uuid
+import base64
 from pathlib import Path
 import io
 from app import auth
@@ -18,9 +17,8 @@ except ImportError:
 
 router = APIRouter()
 
-# Create uploads directory if it doesn't exist
-UPLOAD_DIR = Path("uploads/logos")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# NOTE: Serverless platforms (Vercel) have a read-only, ephemeral filesystem, so
+# logos are resized and stored inline in the database as base64 data URLs.
 
 # Allowed image types
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -44,11 +42,6 @@ async def upload_logo(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
-    
-    # Generate unique filename
-    file_ext = Path(file.filename).suffix.lower()
-    unique_filename = f"{current_user.id}_{uuid.uuid4().hex}{file_ext}"
-    file_path = UPLOAD_DIR / unique_filename
     
     try:
         # Read file content
@@ -76,12 +69,15 @@ async def upload_logo(
                     image = image.convert('RGB')
                 
                 # Resize if too large (max 500px width/height while maintaining aspect ratio)
-                max_size = 500
+                max_size = 400
                 if image.width > max_size or image.height > max_size:
                     image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
                 
-                # Save the processed image
-                image.save(file_path, 'JPEG', quality=85, optimize=True)
+                # Encode the processed image in memory
+                buffer = io.BytesIO()
+                image.save(buffer, 'JPEG', quality=80, optimize=True)
+                contents = buffer.getvalue()
+                mime_type = 'image/jpeg'
                 
             except Exception as e:
                 raise HTTPException(
@@ -90,31 +86,26 @@ async def upload_logo(
                 )
         else:
             # If PIL is not available, just save the file as-is
-            # Basic validation: check if it's a valid image by checking magic bytes
-            if not contents.startswith(b'\xff\xd8') and not contents.startswith(b'\x89PNG'):
-                # Try to check for other image formats
-                is_image = False
-                if contents.startswith(b'GIF'):
-                    is_image = True
-                elif contents.startswith(b'RIFF') and b'WEBP' in contents[:20]:
-                    is_image = True
-                
-                if not is_image:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="File does not appear to be a valid image. Please install Pillow for better image processing."
-                    )
-            
-            # Save file directly without processing
-            with open(file_path, 'wb') as f:
-                f.write(contents)
+            # Basic validation: check magic bytes
+            if contents.startswith(b'\xff\xd8'):
+                mime_type = 'image/jpeg'
+            elif contents.startswith(b'\x89PNG'):
+                mime_type = 'image/png'
+            elif contents.startswith(b'GIF'):
+                mime_type = 'image/gif'
+            elif contents.startswith(b'RIFF') and b'WEBP' in contents[:20]:
+                mime_type = 'image/webp'
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="File does not appear to be a valid image."
+                )
         
-        # Return the URL path (relative to the API)
-        logo_url = f"/api/uploads/logos/{unique_filename}"
+        logo_url = f"data:{mime_type};base64,{base64.b64encode(contents).decode('ascii')}"
         
         return JSONResponse({
             "logo_url": logo_url,
-            "filename": unique_filename
+            "filename": file.filename
         })
         
     except HTTPException:

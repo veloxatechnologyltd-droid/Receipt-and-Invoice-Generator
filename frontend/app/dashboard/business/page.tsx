@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import api from '@/lib/api'
+import api, { resolveAssetUrl } from '@/lib/api'
 import { CURRENCIES, DEFAULT_CURRENCY } from '@/lib/currency'
 import '../dashboard.css'
 
@@ -80,9 +80,7 @@ export default function BusinessPage() {
       const res = await api.get('/api/business/')
       setBusiness(res.data)
       if (res.data.logo_url) {
-        setLogoPreview(res.data.logo_url.startsWith('http') 
-          ? res.data.logo_url 
-          : `http://localhost:8000${res.data.logo_url}`)
+        setLogoPreview(resolveAssetUrl(res.data.logo_url))
       }
     } catch (err) {
       // Business doesn't exist yet
@@ -118,7 +116,7 @@ export default function BusinessPage() {
         },
       })
 
-      const logoUrl = `http://localhost:8000${res.data.logo_url}`
+      const logoUrl = resolveAssetUrl(res.data.logo_url)
       setBusiness({ ...business, logo_url: res.data.logo_url })
       setLogoPreview(logoUrl)
     } catch (err: any) {

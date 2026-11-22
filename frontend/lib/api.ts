@@ -3,7 +3,12 @@
  */
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// In production (single Vercel project) the API is served from the same domain
+// under /api, so the base URL is empty. For local dev it defaults to the FastAPI
+// server; override either with NEXT_PUBLIC_API_URL.
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000')
 
 // Create axios instance
 const api = axios.create({
@@ -33,5 +38,11 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/** Resolve a stored asset URL (data URL, absolute URL, or API-relative path). */
+export function resolveAssetUrl(url: string): string {
+  if (url.startsWith('data:') || url.startsWith('http')) return url
+  return `${API_BASE_URL}${url}`
+}
 
 export default api

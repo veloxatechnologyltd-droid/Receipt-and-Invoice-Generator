@@ -1,7 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Enable static export for client-side only app
-  output: 'standalone',
-}
+const nextConfig = {}
 
 module.exports = nextConfig

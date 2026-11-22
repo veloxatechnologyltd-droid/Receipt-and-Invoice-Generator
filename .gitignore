@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # Next.js
+*.tsbuildinfo
 .next/
 out/
 build/
