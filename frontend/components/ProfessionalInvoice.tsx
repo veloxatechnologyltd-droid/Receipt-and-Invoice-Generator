@@ -1,5 +1,7 @@
 'use client'
 
+import { formatCurrency } from '@/lib/currency'
+
 interface Item {
   name: string
   description?: string
@@ -19,13 +21,13 @@ interface InvoiceProps {
   businessPhone?: string
   businessEmail?: string
   businessTaxId?: string
+  currency?: string
   customerName: string
   customerEmail?: string
   customerPhone?: string
   customerAddress?: string
   customerTaxId?: string
   issueDate: string
-  dueDate?: string
   items: Item[]
   subtotal: number
   taxRate: number
@@ -48,13 +50,13 @@ export default function ProfessionalInvoice({
   businessPhone,
   businessEmail,
   businessTaxId,
+  currency,
   customerName,
   customerEmail,
   customerPhone,
   customerAddress,
   customerTaxId,
   issueDate,
-  dueDate,
   items,
   subtotal,
   taxRate,
@@ -65,13 +67,7 @@ export default function ProfessionalInvoice({
   status,
   notes
 }: InvoiceProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
+  const money = (amount: number) => formatCurrency(amount, currency)
 
   const formatAddress = () => {
     const parts = [businessAddress, businessCity, businessState, businessZip].filter(Boolean)
@@ -147,16 +143,6 @@ export default function ProfessionalInvoice({
                   day: 'numeric'
                 })}</span>
               </div>
-              {dueDate && (
-                <div className="invoice-meta-row">
-                  <span>Due Date:</span>
-                  <span>{new Date(dueDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}</span>
-                </div>
-              )}
               {paymentTerms && (
                 <div className="invoice-meta-row">
                   <span>Payment Terms:</span>
@@ -178,7 +164,7 @@ export default function ProfessionalInvoice({
                 <th className="item-description">Description</th>
                 <th className="item-quantity">QTY</th>
                 <th className="item-price">UNIT</th>
-                <th className="item-total">RICE AMOUNT</th>
+                <th className="item-total">PRICE AMOUNT</th>
               </tr>
             </thead>
             <tbody>
@@ -187,8 +173,8 @@ export default function ProfessionalInvoice({
                   <td className="item-name">{item.name}</td>
                   <td className="item-description">{item.description || '-'}</td>
                   <td className="item-quantity">{item.quantity}</td>
-                  <td className="item-price">{formatCurrency(item.unit_price)}</td>
-                  <td className="item-total">{formatCurrency(item.total)}</td>
+                  <td className="item-price">{money(item.unit_price)}</td>
+                  <td className="item-total">{money(item.total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -201,23 +187,23 @@ export default function ProfessionalInvoice({
         <div className="invoice-totals">
           <div className="total-row">
             <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <span>{money(subtotal)}</span>
           </div>
           {discount > 0 && (
             <div className="total-row">
               <span>Discount</span>
-              <span>-{formatCurrency(discount)}</span>
+              <span>-{money(discount)}</span>
             </div>
           )}
           {taxRate > 0 && (
             <div className="total-row">
               <span>Tax ({taxRate}%)</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span>{money(taxAmount)}</span>
             </div>
           )}
           <div className="total-row total-final">
             <span>Total Due</span>
-            <span>{formatCurrency(total)}</span>
+            <span>{money(total)}</span>
           </div>
         </div>
 
@@ -234,7 +220,7 @@ export default function ProfessionalInvoice({
 
         {/* Footer */}
         <div className="invoice-footer">
-          <div>Please remit payment by the due date.</div>
+          <div>Please remit payment as per the payment terms above.</div>
           <div className="footer-small">built by John Evans Okyere</div>
         </div>
       </div>

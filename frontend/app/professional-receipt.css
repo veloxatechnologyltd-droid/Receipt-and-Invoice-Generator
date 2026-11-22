@@ -164,6 +164,9 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  /* Honour the column percentages at any width instead of being forced open
+     by its own cell contents. */
+  table-layout: fixed;
 }
 
 .items-table thead {
@@ -184,30 +187,33 @@
   padding: 1rem 0.5rem;
   border-bottom: 1px solid #f3f4f6;
   color: #374151;
+  overflow-wrap: break-word;
 }
 
-.item-name {
+/* Scoped to the table: the item total in the editor form reuses these class
+   names but is a grid cell, not a table column. */
+.items-table .item-name {
   width: 20%;
   font-weight: 500;
   color: #111827;
 }
 
-.item-description {
+.items-table .item-description {
   width: 25%;
   color: #6b7280;
 }
 
-.item-quantity {
+.items-table .item-quantity {
   width: 10%;
   text-align: center;
 }
 
-.item-price {
+.items-table .item-price {
   width: 20%;
   text-align: right;
 }
 
-.item-total {
+.items-table .item-total {
   width: 25%;
   text-align: right;
   font-weight: 600;
@@ -224,7 +230,8 @@
   gap: 0.5rem;
 }
 
-.total-row {
+.receipt-totals .total-row,
+.invoice-totals .total-row {
   display: flex;
   justify-content: space-between;
   width: 300px;
@@ -233,16 +240,19 @@
   color: #4b5563;
 }
 
-.total-row span:first-child {
+.receipt-totals .total-row span:first-child,
+.invoice-totals .total-row span:first-child {
   font-weight: 500;
 }
 
-.total-row span:last-child {
+.receipt-totals .total-row span:last-child,
+.invoice-totals .total-row span:last-child {
   text-align: right;
   min-width: 100px;
 }
 
-.total-final {
+.receipt-totals .total-final,
+.invoice-totals .total-final {
   border-top: 2px solid #111827;
   padding-top: 0.75rem;
   margin-top: 0.5rem;
@@ -305,5 +315,50 @@
   .receipt-container,
   .invoice-container {
     box-shadow: none;
+  }
+}
+
+/* The preview column is usually narrower than the document's 800px design
+   width, so tighten the document up as that column narrows. */
+@container preview (max-width: 620px) {
+  .professional-receipt,
+  .professional-invoice {
+    padding: 1.25rem;
+  }
+
+  .brand-name {
+    font-size: 1.4rem;
+  }
+
+  .receipt-number,
+  .invoice-number {
+    font-size: 1.05rem;
+  }
+
+  .receipt-header,
+  .invoice-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+  }
+
+  .items-table th,
+  .items-table td {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+  }
+
+  .items-table td {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+  }
+
+  .invoice-two-column {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .receipt-totals .total-row,
+  .invoice-totals .total-row {
+    width: 100%;
   }
 }

@@ -41,6 +41,12 @@
   gap: 1.5rem;
 }
 
+.form-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
 .form-group-premium {
   display: flex;
   flex-direction: column;
@@ -326,6 +332,91 @@
   color: var(--text-muted);
 }
 
+.doc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 10, 12, 0.72);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.doc-modal {
+  background: var(--background);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 860px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+}
+
+.doc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.doc-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.doc-modal-close {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.85rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.doc-modal-close:hover {
+  background: var(--surface-light);
+}
+
+.doc-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.doc-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--surface-border);
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .doc-modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .doc-modal-header,
+  .doc-modal-body,
+  .doc-modal-actions {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .doc-modal-actions {
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 768px) {
   .page-header-simple {
     margin-bottom: 2rem;
@@ -339,7 +430,7 @@
     font-size: 0.95rem;
   }
 
-  .form-grid-2, .form-grid-3 {
+  .form-grid-2, .form-grid-3, .form-grid-4 {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }

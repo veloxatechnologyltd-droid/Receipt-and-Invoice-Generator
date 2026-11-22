@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { isAuthenticated, getCurrentUser } from '@/lib/auth'
 import Sidebar from '@/components/Sidebar'
 import './dashboard.css'
 import './premium-ui.css'
+
+const WIDE_ROUTES = ['/dashboard/receipt', '/dashboard/invoice']
 
 export default function DashboardLayout({
   children,
@@ -13,6 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -47,7 +50,7 @@ export default function DashboardLayout({
   return (
     <div className="dashboard-layout">
       <Sidebar user={user} />
-      <main className="dashboard-content">
+      <main className={`dashboard-content${WIDE_ROUTES.includes(pathname) ? ' dashboard-content--wide' : ''}`}>
         {children}
       </main>
     </div>

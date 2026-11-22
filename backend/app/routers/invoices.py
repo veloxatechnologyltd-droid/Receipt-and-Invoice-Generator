@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from app.database import get_db
 from app import models, schemas, auth
 
@@ -35,9 +35,8 @@ def create_invoice(
     invoice_number = generate_invoice_number()
     items_json = json.dumps([item.model_dump() for item in invoice_data.items])
     
-    # Set default due date if not provided (30 days from issue date)
+    # Set issue date if not provided
     issue_date = invoice_data.issue_date or datetime.utcnow()
-    due_date = invoice_data.due_date or (issue_date + timedelta(days=30))
     
     db_invoice = models.Invoice(
         invoice_number=invoice_number,
@@ -49,7 +48,6 @@ def create_invoice(
         customer_address=invoice_data.customer_address,
         customer_tax_id=invoice_data.customer_tax_id,
         issue_date=issue_date,
-        due_date=due_date,
         subtotal=invoice_data.subtotal,
         tax_rate=invoice_data.tax_rate,
         tax_amount=invoice_data.tax_amount,

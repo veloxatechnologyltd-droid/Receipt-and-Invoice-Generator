@@ -11,16 +11,19 @@
   --primary-hover: #7C3AED;
   --secondary: #EC4899;
   --accent: #10B981;
+  --accent-light: #34D399;
   --background: #0B0B14;
   --surface: #151521;
   --surface-hover: #1C1C2E;
   --surface-border: #2D2D44;
+  --surface-light: #26263D;
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
   
   --gradient-primary: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
   --gradient-secondary: linear-gradient(135deg, #EC4899 0%, #F43F5E 100%);
+  --gradient-1: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
   --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.15);
   

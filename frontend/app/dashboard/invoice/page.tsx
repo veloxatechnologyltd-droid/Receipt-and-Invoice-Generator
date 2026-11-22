@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { isAuthenticated } from '@/lib/auth'
+import { parseAmount } from '@/lib/amount'
+import { formatCurrency } from '@/lib/currency'
 import ProfessionalInvoice from '@/components/ProfessionalInvoice'
 import '../receipt-invoice.css'
 import '../../professional-receipt.css'
@@ -33,7 +35,6 @@ export default function CreateInvoicePage() {
   const [paymentTerms, setPaymentTerms] = useState('Net 30')
   const [status, setStatus] = useState('pending')
   const [notes, setNotes] = useState('')
-  const [dueDate, setDueDate] = useState('')
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -41,11 +42,6 @@ export default function CreateInvoicePage() {
       return
     }
     loadBusiness()
-    
-    // Set default due date (30 days from now)
-    const date = new Date()
-    date.setDate(date.getDate() + 30)
-    setDueDate(date.toISOString().split('T')[0])
   }, [router])
 
   const loadBusiness = async () => {
@@ -89,6 +85,8 @@ export default function CreateInvoicePage() {
     return { subtotal, taxAmount, total }
   }
 
+  const money = (amount: number) => formatCurrency(amount, business?.currency)
+
   const handleSubmit = async () => {
     if (!business) return
     
@@ -97,6 +95,16 @@ export default function CreateInvoicePage() {
     
     if (validItems.length === 0) {
       alert('Please add at least one item')
+      return
+    }
+
+    const missingAmount = validItems.filter((item) => !(item.total > 0))
+    if (missingAmount.length > 0) {
+      alert(
+        `Please enter a quantity and unit price greater than 0 for: ${missingAmount
+          .map((i) => i.name)
+          .join(', ')}`
+      )
       return
     }
 
@@ -110,7 +118,6 @@ export default function CreateInvoicePage() {
         customer_name: customerName,
         customer_phone: customerPhone || undefined,
         customer_tax_id: customerTaxId || undefined,
-        due_date: dueDate || undefined,
         subtotal,
         tax_rate: taxRate,
         tax_amount: taxAmount,
@@ -132,7 +139,6 @@ export default function CreateInvoicePage() {
   const handleShareWhatsApp = () => {
     const { subtotal, taxAmount, total } = calculateTotals()
     const issueDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const dueDateFormatted = dueDate ? new Date(dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
     const invoiceNumber = `INV-${Date.now().toString().slice(-8).toUpperCase()}`
     
     let invoiceText = `*INVOICE*\n\n`
@@ -142,24 +148,24 @@ export default function CreateInvoicePage() {
     invoiceText += `\n`
     invoiceText += `Invoice #: ${invoiceNumber}\n`
     invoiceText += `Issue Date: ${issueDate}\n`
-    if (dueDateFormatted) invoiceText += `Due Date: ${dueDateFormatted}\n`
     if (customerName) invoiceText += `Bill To: ${customerName}\n`
     if (paymentTerms) invoiceText += `Payment Terms: ${paymentTerms}\n`
-    invoiceText += `Status: ${status.toUpperCase()}\n`
+    if (status) invoiceText += `Status: ${status.toUpperCase()}\n`
     invoiceText += `\n`
     invoiceText += `*Items:*\n`
     items.filter(i => i.name).forEach(item => {
       invoiceText += `• ${item.name}`
       if (item.description) invoiceText += ` - ${item.description}`
-      invoiceText += `\n  Qty: ${item.quantity} × $${item.unit_price.toFixed(2)} = $${item.total.toFixed(2)}\n`
+      invoiceText += `\n  Qty: ${item.quantity} × ${money(item.unit_price)} = ${money(item.total)}\n`
     })
     invoiceText += `\n`
-    invoiceText += `Subtotal: $${subtotal.toFixed(2)}\n`
-    if (discount > 0) invoiceText += `Discount: -$${discount.toFixed(2)}\n`
-    if (taxRate > 0) invoiceText += `Tax (${taxRate}%): $${taxAmount.toFixed(2)}\n`
-    invoiceText += `*Total Due: $${total.toFixed(2)}*\n`
+    invoiceText += `Subtotal: ${money(subtotal)}\n`
+    if (discount > 0) invoiceText += `Discount: -${money(discount)}\n`
+    if (taxRate > 0) invoiceText += `Tax (${taxRate}%): ${money(taxAmount)}\n`
+    invoiceText += `*Total Due: ${money(total)}*\n`
     if (notes) invoiceText += `\nNotes: ${notes}\n`
-    invoiceText += `\nPlease remit payment by the due date.`
+    invoiceText += `\nPlease remit payment.`
+
     
     const encoded = encodeURIComponent(invoiceText)
     // Remove all non-digit characters from phone number (keeps only digits)
@@ -220,10 +226,6 @@ export default function CreateInvoicePage() {
           <h2>Invoice Details</h2>
           <div className="form-grid">
             <div className="form-group">
-              <label>Due Date</label>
-              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-            </div>
-            <div className="form-group">
               <label>Payment Terms</label>
               <input type="text" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="e.g., Net 30" />
             </div>
@@ -239,14 +241,22 @@ export default function CreateInvoicePage() {
           </div>
 
           <h2>Items</h2>
+          <div className="item-row item-row-header">
+            <span>Item</span>
+            <span>Description</span>
+            <span>Qty</span>
+            <span>Unit Price</span>
+            <span>Total</span>
+            <span />
+          </div>
           {items.map((item, index) => (
             <div key={index} className="item-row">
-              <input type="text" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} />
-              <input type="text" placeholder="Description" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} />
-              <input type="number" placeholder="Qty" value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)} />
-              <input type="number" placeholder="Unit Price" step="0.01" value={item.unit_price || ''} onChange={(e) => handleItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)} />
-              <span className="item-total">${item.total.toFixed(2)}</span>
-              <button onClick={() => removeItem(index)} disabled={items.length === 1}>×</button>
+              <input type="text" aria-label="Item name" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} />
+              <input type="text" aria-label="Description" placeholder="Description" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} />
+              <input type="text" inputMode="decimal" aria-label="Quantity" placeholder="Qty" value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', parseAmount(e.target.value))} />
+              <input type="text" inputMode="decimal" aria-label="Unit price" placeholder="Unit Price" value={item.unit_price || ''} onChange={(e) => handleItemChange(index, 'unit_price', parseAmount(e.target.value))} />
+              <span className="item-total">{money(item.total)}</span>
+              <button onClick={() => removeItem(index)} disabled={items.length === 1} aria-label="Remove item">×</button>
             </div>
           ))}
           <button onClick={addItem} className="add-item-btn">+ Add Item</button>
@@ -258,8 +268,8 @@ export default function CreateInvoicePage() {
               <input type="number" step="0.01" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} />
             </div>
             <div className="form-group">
-              <label>Discount ($)</label>
-              <input type="number" step="0.01" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} />
+              <label>Discount</label>
+              <input type="text" inputMode="decimal" value={discount || ''} onChange={(e) => setDiscount(parseAmount(e.target.value))} placeholder="0.00" />
             </div>
           </div>
           <div className="form-group">
@@ -268,10 +278,10 @@ export default function CreateInvoicePage() {
           </div>
 
           <div className="totals-display">
-            <div>Subtotal: ${subtotal.toFixed(2)}</div>
-            {discount > 0 && <div>Discount: -${discount.toFixed(2)}</div>}
-            {taxRate > 0 && <div>Tax ({taxRate}%): ${taxAmount.toFixed(2)}</div>}
-            <div className="total-final">Total: ${total.toFixed(2)}</div>
+            <div>Subtotal: {money(subtotal)}</div>
+            {discount > 0 && <div>Discount: -{money(discount)}</div>}
+            {taxRate > 0 && <div>Tax ({taxRate}%): {money(taxAmount)}</div>}
+            <div className="total-final">Total: {money(total)}</div>
           </div>
 
           <div className="form-actions">
@@ -294,11 +304,11 @@ export default function CreateInvoicePage() {
             businessPhone={business.phone}
             businessEmail={business.email}
             businessTaxId={business.tax_id}
+            currency={business.currency}
             customerName={customerName || 'Customer Name'}
             customerPhone={customerPhone}
             customerTaxId={customerTaxId}
             issueDate={new Date().toISOString()}
-            dueDate={dueDate}
             items={items.filter(i => i.name)}
             subtotal={subtotal}
             taxRate={taxRate}

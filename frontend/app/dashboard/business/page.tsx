@@ -3,7 +3,52 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import { CURRENCIES, DEFAULT_CURRENCY } from '@/lib/currency'
 import '../dashboard.css'
+
+const COUNTRIES = [
+  'United States',
+  'United Kingdom',
+  'Canada',
+  'Australia',
+  'India',
+  'Nigeria',
+  'South Africa',
+  'Kenya',
+  'Germany',
+  'France',
+  'Spain',
+  'Italy',
+  'Netherlands',
+  'Sweden',
+  'Switzerland',
+  'Ireland',
+  'Poland',
+  'Portugal',
+  'Brazil',
+  'Mexico',
+  'Argentina',
+  'Japan',
+  'China',
+  'Singapore',
+  'United Arab Emirates',
+  'Saudi Arabia',
+  'New Zealand',
+  'Philippines',
+  'Indonesia',
+  'Vietnam',
+  'Thailand',
+  'Malaysia',
+  'Pakistan',
+  'Bangladesh',
+  'Sri Lanka',
+  'Ghana',
+  'Egypt',
+  'Morocco',
+  'Tanzania',
+  'Uganda',
+  'Other'
+]
 
 export default function BusinessPage() {
   const router = useRouter()
@@ -15,7 +60,8 @@ export default function BusinessPage() {
     city: '',
     state: '',
     zip_code: '',
-    country: 'USA',
+    country: '',
+    currency: DEFAULT_CURRENCY,
     phone: '',
     email: '',
     website: '',
@@ -161,7 +207,7 @@ export default function BusinessPage() {
             <input type="text" value={business.address} onChange={(e) => handleChange('address', e.target.value)} required placeholder="Rocket Road" />
           </div>
 
-          <div className="form-grid-3">
+          <div className="form-grid-4">
             <div className="form-group-premium">
               <label>City *</label>
               <input type="text" value={business.city} onChange={(e) => handleChange('city', e.target.value)} required placeholder="Hawthorne" />
@@ -174,16 +220,42 @@ export default function BusinessPage() {
               <label>ZIP Code *</label>
               <input type="text" value={business.zip_code} onChange={(e) => handleChange('zip_code', e.target.value)} required placeholder="90250" />
             </div>
+            <div className="form-group-premium">
+              <label>Country *</label>
+              <input
+                type="text"
+                value={business.country}
+                onChange={(e) => handleChange('country', e.target.value)}
+                required
+                placeholder="United States"
+                list="country-options"
+              />
+              <datalist id="country-options">
+                {COUNTRIES.map((c) => <option key={c} value={c} />)}
+              </datalist>
+            </div>
           </div>
 
-          <div className="form-grid-2">
+          <div className="form-grid-3">
+            <div className="form-group-premium">
+              <label>Currency *</label>
+              <select
+                value={business.currency || DEFAULT_CURRENCY}
+                onChange={(e) => handleChange('currency', e.target.value)}
+                required
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="form-group-premium">
               <label>Phone Number</label>
-              <input type="tel" value={business.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+              <input type="tel" value={business.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+233 20 123 4567" />
             </div>
             <div className="form-group-premium">
               <label>Business Email</label>
-              <input type="email" value={business.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="billing@spacex.com" />
+              <input type="email" value={business.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="billing@example.com" />
             </div>
           </div>
 

@@ -44,7 +44,8 @@ class Business(Base):
     city = Column(String)
     state = Column(String)
     zip_code = Column(String)
-    country = Column(String, default="USA")
+    country = Column(String)
+    currency = Column(String, default="GHS")  # ISO 4217 code, e.g. GHS
     phone = Column(String)
     email = Column(String)
     website = Column(String)

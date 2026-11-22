@@ -1,14 +1,11 @@
 /* Receipt and Invoice Form Styles */
 .form-container {
-  min-height: 100vh;
   background: var(--background);
   color: var(--text-primary);
-  padding: 2rem;
 }
 
 .form-header {
-  max-width: 1400px;
-  margin: 0 auto 2rem;
+  margin: 0 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -38,20 +35,27 @@
   background: var(--surface-light);
 }
 
+/* The form track is free to shrink, the preview track keeps a readable
+   minimum, so a long item row can never collapse the document. */
 .form-layout {
-  max-width: 1400px;
-  margin: 0 auto;
+  margin: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) clamp(420px, 34%, 540px);
+  gap: 1.5rem;
+  align-items: start;
 }
 
 .form-section,
 .preview-section {
   background: var(--surface);
-  border: 1px solid var(--surface-light);
+  border: 1px solid var(--surface-border);
   border-radius: 16px;
   padding: 2rem;
+  min-width: 0;
+}
+
+.form-section {
+  container: editor / inline-size;
 }
 
 .form-section h2 {
@@ -67,7 +71,7 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -77,6 +81,7 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  min-width: 0;
 }
 
 .form-group.full-width {
@@ -93,11 +98,13 @@
 .form-group textarea {
   padding: 0.875rem;
   background: var(--background);
-  border: 1px solid var(--surface-light);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 1rem;
   font-family: inherit;
+  min-width: 0;
+  width: 100%;
 }
 
 .form-group input:focus,
@@ -109,8 +116,8 @@
 
 .item-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 80px 120px 100px 40px;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 64px 104px 96px 32px;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
   align-items: center;
 }
@@ -118,10 +125,100 @@
 .item-row input {
   padding: 0.75rem;
   background: var(--background);
-  border: 1px solid var(--surface-light);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.9rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.item-row button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-hover);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.item-row button:hover:not(:disabled) {
+  border-color: #f43f5e;
+  color: #f43f5e;
+}
+
+.item-row button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.item-row-header {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .item-row-header {
+    display: grid;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .item-row-header span:nth-child(3),
+  .item-row-header span:nth-child(4),
+  .item-row-header span:nth-child(5) {
+    text-align: right;
+  }
+}
+
+/* The item row is the widest thing in the form, so tighten it based on the
+   form column's own width rather than the viewport's. Below 769px the
+   viewport rules stack every field instead. */
+@media (min-width: 769px) {
+  @container editor (max-width: 660px) {
+    .item-row {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 56px 88px 84px 28px;
+      gap: 0.4rem;
+    }
+
+    .item-row input {
+      padding: 0.6rem 0.5rem;
+      font-size: 0.85rem;
+    }
+  }
+
+  /* Too narrow for one line: split the item into two rows of fields. */
+  @container editor (max-width: 520px) {
+    .item-row-header {
+      display: none;
+    }
+
+    .item-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 84px 28px;
+      grid-template-areas:
+        'name desc desc remove'
+        'qty unit total total';
+      row-gap: 0.5rem;
+    }
+
+    .item-row > *:nth-child(1) { grid-area: name; }
+    .item-row > *:nth-child(2) { grid-area: desc; }
+    .item-row > *:nth-child(3) { grid-area: qty; }
+    .item-row > *:nth-child(4) { grid-area: unit; }
+    .item-row > *:nth-child(5) { grid-area: total; }
+    .item-row > *:nth-child(6) { grid-area: remove; }
+  }
 }
 
 .item-total {
@@ -211,9 +308,12 @@
 
 .preview-section {
   position: sticky;
-  top: 2rem;
-  max-height: calc(100vh - 4rem);
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
   overflow-y: auto;
+  overflow-x: hidden;
+  /* Lets the document below re-flow when this column is narrow. */
+  container: preview / inline-size;
 }
 
 .preview-section h2 {
@@ -230,9 +330,10 @@
   color: var(--text-secondary);
 }
 
-@media (max-width: 1024px) {
+/* Below ~1280px there is no room for a readable form + preview pair. */
+@media (max-width: 1279px) {
   .form-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .preview-section {

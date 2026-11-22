@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { isAuthenticated } from '@/lib/auth'
+import { parseAmount } from '@/lib/amount'
+import { formatCurrency } from '@/lib/currency'
 import ProfessionalReceipt from '@/components/ProfessionalReceipt'
 import '../receipt-invoice.css'
 import '../../professional-receipt.css'
@@ -81,6 +83,8 @@ export default function CreateReceiptPage() {
     return { subtotal, taxAmount, total }
   }
 
+  const money = (amount: number) => formatCurrency(amount, business?.currency)
+
   const handleSubmit = async () => {
     if (!business) return
     
@@ -89,6 +93,16 @@ export default function CreateReceiptPage() {
     
     if (validItems.length === 0) {
       alert('Please add at least one item')
+      return
+    }
+
+    const missingAmount = validItems.filter((item) => !(item.total > 0))
+    if (missingAmount.length > 0) {
+      alert(
+        `Please enter a quantity and unit price greater than 0 for: ${missingAmount
+          .map((i) => i.name)
+          .join(', ')}`
+      )
       return
     }
 
@@ -131,13 +145,13 @@ export default function CreateReceiptPage() {
     items.filter(i => i.name).forEach(item => {
       receiptText += `• ${item.name}`
       if (item.description) receiptText += ` - ${item.description}`
-      receiptText += `\n  Qty: ${item.quantity} × $${item.unit_price.toFixed(2)} = $${item.total.toFixed(2)}\n`
+      receiptText += `\n  Qty: ${item.quantity} × ${money(item.unit_price)} = ${money(item.total)}\n`
     })
     receiptText += `\n`
-    receiptText += `Subtotal: $${subtotal.toFixed(2)}\n`
-    if (discount > 0) receiptText += `Discount: -$${discount.toFixed(2)}\n`
-    if (taxRate > 0) receiptText += `Tax (${taxRate}%): $${taxAmount.toFixed(2)}\n`
-    receiptText += `*Total: $${total.toFixed(2)}*\n`
+    receiptText += `Subtotal: ${money(subtotal)}\n`
+    if (discount > 0) receiptText += `Discount: -${money(discount)}\n`
+    if (taxRate > 0) receiptText += `Tax (${taxRate}%): ${money(taxAmount)}\n`
+    receiptText += `*Total: ${money(total)}*\n`
     if (paymentMethod) receiptText += `\nPayment Method: ${paymentMethod}\n`
     if (notes) receiptText += `\nNotes: ${notes}\n`
     receiptText += `\nThank you for your business!`
@@ -195,14 +209,22 @@ export default function CreateReceiptPage() {
           </div>
 
           <h2>Items</h2>
+          <div className="item-row item-row-header">
+            <span>Item</span>
+            <span>Description</span>
+            <span>Qty</span>
+            <span>Unit Price</span>
+            <span>Total</span>
+            <span />
+          </div>
           {items.map((item, index) => (
             <div key={index} className="item-row">
-              <input type="text" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} />
-              <input type="text" placeholder="Description" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} />
-              <input type="number" placeholder="Qty" value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)} />
-              <input type="number" placeholder="Unit Price" step="0.01" value={item.unit_price || ''} onChange={(e) => handleItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)} />
-              <span className="item-total">${item.total.toFixed(2)}</span>
-              <button onClick={() => removeItem(index)} disabled={items.length === 1}>×</button>
+              <input type="text" aria-label="Item name" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} />
+              <input type="text" aria-label="Description" placeholder="Description" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} />
+              <input type="text" inputMode="decimal" aria-label="Quantity" placeholder="Qty" value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', parseAmount(e.target.value))} />
+              <input type="text" inputMode="decimal" aria-label="Unit price" placeholder="Unit Price" value={item.unit_price || ''} onChange={(e) => handleItemChange(index, 'unit_price', parseAmount(e.target.value))} />
+              <span className="item-total">{money(item.total)}</span>
+              <button onClick={() => removeItem(index)} disabled={items.length === 1} aria-label="Remove item">×</button>
             </div>
           ))}
           <button onClick={addItem} className="add-item-btn">+ Add Item</button>
@@ -214,8 +236,8 @@ export default function CreateReceiptPage() {
               <input type="number" step="0.01" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} />
             </div>
             <div className="form-group">
-              <label>Discount ($)</label>
-              <input type="number" step="0.01" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} />
+              <label>Discount</label>
+              <input type="text" inputMode="decimal" value={discount || ''} onChange={(e) => setDiscount(parseAmount(e.target.value))} placeholder="0.00" />
             </div>
             <div className="form-group">
               <label>Payment Method</label>
@@ -228,10 +250,10 @@ export default function CreateReceiptPage() {
           </div>
 
           <div className="totals-display">
-            <div>Subtotal: ${subtotal.toFixed(2)}</div>
-            {discount > 0 && <div>Discount: -${discount.toFixed(2)}</div>}
-            {taxRate > 0 && <div>Tax ({taxRate}%): ${taxAmount.toFixed(2)}</div>}
-            <div className="total-final">Total: ${total.toFixed(2)}</div>
+            <div>Subtotal: {money(subtotal)}</div>
+            {discount > 0 && <div>Discount: -{money(discount)}</div>}
+            {taxRate > 0 && <div>Tax ({taxRate}%): {money(taxAmount)}</div>}
+            <div className="total-final">Total: {money(total)}</div>
           </div>
 
           <div className="form-actions">
@@ -254,6 +276,7 @@ export default function CreateReceiptPage() {
             businessPhone={business.phone}
             businessEmail={business.email}
             businessTaxId={business.tax_id}
+            currency={business.currency}
             customerName={customerName}
             customerPhone={customerPhone}
             date={new Date().toISOString()}

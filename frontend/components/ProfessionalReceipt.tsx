@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import api from '@/lib/api'
+import { formatCurrency } from '@/lib/currency'
 
 interface Item {
   name: string
@@ -22,6 +21,7 @@ interface ReceiptProps {
   businessPhone?: string
   businessEmail?: string
   businessTaxId?: string
+  currency?: string
   customerName?: string
   customerEmail?: string
   customerPhone?: string
@@ -48,6 +48,7 @@ export default function ProfessionalReceipt({
   businessPhone,
   businessEmail,
   businessTaxId,
+  currency,
   customerName,
   customerEmail,
   customerPhone,
@@ -62,13 +63,7 @@ export default function ProfessionalReceipt({
   paymentMethod,
   notes
 }: ReceiptProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
+  const money = (amount: number) => formatCurrency(amount, currency)
 
   const formatAddress = () => {
     const parts = [businessAddress, businessCity, businessState, businessZip].filter(Boolean)
@@ -146,7 +141,7 @@ export default function ProfessionalReceipt({
                 <th className="item-description">Description</th>
                 <th className="item-quantity">QTY</th>
                 <th className="item-price">UNIT</th>
-                <th className="item-total">RICE AMOUNT</th>
+                <th className="item-total">PRICE AMOUNT</th>
               </tr>
             </thead>
             <tbody>
@@ -155,8 +150,8 @@ export default function ProfessionalReceipt({
                   <td className="item-name">{item.name}</td>
                   <td className="item-description">{item.description || '-'}</td>
                   <td className="item-quantity">{item.quantity}</td>
-                  <td className="item-price">{formatCurrency(item.unit_price)}</td>
-                  <td className="item-total">{formatCurrency(item.total)}</td>
+                  <td className="item-price">{money(item.unit_price)}</td>
+                  <td className="item-total">{money(item.total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -169,23 +164,23 @@ export default function ProfessionalReceipt({
         <div className="receipt-totals">
           <div className="total-row">
             <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <span>{money(subtotal)}</span>
           </div>
           {discount > 0 && (
             <div className="total-row">
               <span>Discount</span>
-              <span>-{formatCurrency(discount)}</span>
+              <span>-{money(discount)}</span>
             </div>
           )}
           {taxRate > 0 && (
             <div className="total-row">
               <span>Tax ({taxRate}%)</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span>{money(taxAmount)}</span>
             </div>
           )}
           <div className="total-row total-final">
             <span>Total</span>
-            <span>{formatCurrency(total)}</span>
+            <span>{money(total)}</span>
           </div>
         </div>
 

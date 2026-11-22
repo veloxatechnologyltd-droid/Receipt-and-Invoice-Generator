@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS businesses (
     city VARCHAR,
     state VARCHAR,
     zip_code VARCHAR,
-    country VARCHAR DEFAULT 'USA',
+    country VARCHAR,
+    currency VARCHAR DEFAULT 'GHS',
     phone VARCHAR,
     email VARCHAR,
     website VARCHAR,
@@ -129,6 +130,15 @@ CREATE TABLE IF NOT EXISTS challenges (
 CREATE INDEX IF NOT EXISTS ix_challenges_id ON challenges(id);
 CREATE INDEX IF NOT EXISTS ix_challenges_receipt_id ON challenges(receipt_id);
 CREATE INDEX IF NOT EXISTS ix_challenges_invoice_id ON challenges(invoice_id);
+
+-- 6. Migrations for existing databases
+-- CREATE TABLE IF NOT EXISTS above is a no-op once a table exists, so any new
+-- column must also be added to already-deployed databases.
+
+-- Remove the hardcoded 'USA' country default and add the currency column.
+ALTER TABLE businesses ALTER COLUMN country DROP DEFAULT;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'GHS';
+UPDATE businesses SET currency = 'GHS' WHERE currency IS NULL;
 
 -- Verify tables were created
 SELECT 

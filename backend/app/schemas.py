@@ -33,7 +33,8 @@ class BusinessCreate(BaseModel):
     city: str  # Required
     state: str  # Required
     zip_code: str  # Required
-    country: str = "USA"  # Required, default to USA
+    country: str  # Required, no default
+    currency: str = "GHS"  # ISO 4217 code, e.g. GHS
     phone: Optional[str] = None  # Optional
     email: Optional[str] = None  # Optional
     website: Optional[str] = None  # Optional
@@ -47,6 +48,7 @@ class BusinessUpdate(BaseModel):
     state: Optional[str] = None  # Can update but must remain non-empty
     zip_code: Optional[str] = None  # Can update but must remain non-empty
     country: Optional[str] = None  # Can update but must remain non-empty
+    currency: Optional[str] = None  # ISO 4217 code
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
@@ -62,6 +64,7 @@ class BusinessResponse(BaseModel):
     state: Optional[str]
     zip_code: Optional[str]
     country: Optional[str]
+    currency: Optional[str]
     phone: Optional[str]
     email: Optional[str]
     website: Optional[str]
@@ -127,7 +130,6 @@ class InvoiceCreate(BaseModel):
     customer_address: Optional[str] = None
     customer_tax_id: Optional[str] = None
     issue_date: Optional[datetime] = None
-    due_date: Optional[datetime] = None
     subtotal: float
     tax_rate: float = 0.0
     tax_amount: float = 0.0

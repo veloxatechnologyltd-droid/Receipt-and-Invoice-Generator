@@ -11,6 +11,13 @@
   max-width: 1200px;
 }
 
+/* Receipt/invoice editors need the full width: they pair a form with a
+   side-by-side document preview. */
+.dashboard-content--wide {
+  max-width: none;
+  padding: 2rem;
+}
+
 .dashboard-header {
   margin-bottom: 3rem;
 }
